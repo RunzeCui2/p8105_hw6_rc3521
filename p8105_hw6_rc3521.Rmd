@@ -30,5 +30,31 @@ scale_fill_discrete = scale_fill_viridis_d
 theme_set(theme_minimal() + theme(legend.position = "bottom"))
 ```
 
+## Problem 2
+
+We imported the data firstly
+
+```{r, warning = F, message = F}
+homicide = read_csv("https://raw.githubusercontent.com/washingtonpost/data-homicides/master/homicide-data.csv")
+```
+
+Now, we create a city_state variable (e.g. “Baltimore, MD”), and a binary variable indicating whether the homicide is solved. Besides, we omit cities Dallas, TX; Phoenix, AZ; Kansas City, MO; and Tulsa, AL. 
+
+```{r, warning = F}
+homicide_df = 
+  homicide %>% 
+  janitor::clean_names() %>%
+   mutate(
+     city_state = str_c(city, state, sep = ", "),
+     resolved = as.numeric(disposition == "Closed by arrest"),
+     reported_date = as.Date(as.character(reported_date), format = "%Y%m%d"),
+     victim_age = as.numeric(victim_age),
+     victim_race = fct_relevel(victim_race, "White")
+    ) %>%
+  filter(city_state != c("Tulsa, AL","Dallas, TX","Phoenix, AZ","Kansas City, MO"),
+         victim_race == c("White","Black")) %>%
+  relocate(city_state)
+```
+
 
 
