@@ -132,7 +132,121 @@ Clearly, assuming all other variables unchanged, homicides in which the victim i
 
 ## Problem 3
 
+Loading and processing the data
 
+```{r, message = FALSE, warning = FALSE}
+birthweight_df = 
+  read_csv("data/birthweight.csv") %>% 
+  janitor::clean_names() %>%
+  mutate(
+        across(.cols = c(babysex, frace, malform, mrace), as.factor)
+        ) %>%
+  mutate(
+    mrace = recode(mrace, 
+                   `1` = "White", 
+                   `2` = "Black", 
+                   `3` = "Asian", 
+                   `4` = "Puerto Rican", 
+                   `8` = "Other"),
+    frace = recode(frace, 
+                   `1` = "White", 
+                   `2` = "Black", 
+                   `3` = "Asian", 
+                   `4` = "Puerto Rican", 
+                   `8` = "Other", 
+                   `9` = "Unknown"),
+    babysex = recode(babysex, 
+                     `1` = "Male", 
+                     `2` = "Female"),
+    malform = ifelse(malform == "0", "absent","present")
+    ) %>% 
+  mutate(
+    frace = fct_relevel(frace, "White"),
+    mrace = fct_relevel(mrace, "White"),
+    babysex = fct_relevel(babysex,"Female")
+         ) %>% 
+  select(bwt,everything())
+
+head(birthweight_df, 10)
+```
+
+Propose a regression model for `birthweight.` This model may be based on a hypothesized structure for the factors that underly `birthweight`, on a data-driven model-building process, or a combination of the two.
+
+First, we need to determine which model is proper in this problem
+
+`m_1` represents the full model
+
+```{r}
+m_1 = 
+  lm(bwt ~., data = birthweight_df)
+summary(m_1)
+
+```
+
+Now, we check select the variables and determine which predictors are dropped and which can be reserved. In the part, I use `MASS` package to do stepwise process for model selection. And `broom::tidy` can be used to show the predictors which we reserved after stepwise model selection.
+
+```{r}
+m_2 = MASS::stepAIC(m_1, direction = "both", trace = FALSE)
+broom::tidy(m_2) 
+```
+
+Then, draw a plot of model residuals and fitted values
+
+```{r, message = FALSE, warning = FALSE}
+birthweight_df %>% 
+  add_residuals(m_2) %>% 
+  add_predictions(m_2) %>% 
+  ggplot(aes(x = pred, y = resid)) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    x = "Fitted values",
+    y = "Residuals",
+    title = "Model residuals vs fitted values"
+  )
+```
+
+Then, we do cross validation. Note: `model_1` is the model what we choose above. 
+
+```{r warning = FALSE}
+cv_df = 
+  crossv_mc(birthweight_df, 2000) %>% 
+  mutate(
+    train = map(train, as_tibble), 
+    test = map(test, as_tibble))
+
+cv_df_1 =
+  cv_df %>% 
+  mutate(
+    model_1  = map(train, ~lm(bwt ~ babysex + bhead + blength + 
+                                delwt + fincome + gaweeks + 
+                                mheight + mrace + parity + 
+                                ppwt + smoken, data = .x)),
+    model_2  = map(train, ~lm(bwt ~ gaweeks + blength, data = .x)),
+    model_3  = map(train, ~lm(bwt ~ bhead + blength + babysex, data = .x))) %>% 
+  mutate(
+    rmse_1 = map2_dbl(model_1, test, ~rmse(model = .x, data = .y)),
+    rmse_2 = map2_dbl(model_2, test, ~rmse(model = .x, data = .y)),
+    rmse_3 = map2_dbl(model_3, test, ~rmse(model = .x, data = .y)))
+  
+```
+
+Plotting
+
+```{r, warning = FALSE}
+cv_df_1 %>% 
+  select(starts_with("rmse")) %>% 
+    pivot_longer(
+    everything(),
+    names_to = "model", 
+    values_to = "rmse",
+    names_prefix = "rmse_") %>% 
+    mutate(model = fct_inorder(model)) %>% 
+    ggplot(aes(x = model, y = rmse)) + 
+    geom_violin(aes(fill = model))
+```
+
+Therefore, the `model_1` has lower RMSE value and it should be more optimal than other 2 models. 
 
 
 
