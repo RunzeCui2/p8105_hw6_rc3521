@@ -210,7 +210,7 @@ Then, we do cross validation. Note: `model_1` is the model what we choose above.
 
 ```{r warning = FALSE}
 cv_df = 
-  crossv_mc(birthweight_df, 2000) %>% 
+  crossv_mc(birthweight_df, 200) %>% 
   mutate(
     train = map(train, as_tibble), 
     test = map(test, as_tibble))
@@ -223,7 +223,9 @@ cv_df_1 =
                                 mheight + mrace + parity + 
                                 ppwt + smoken, data = .x)),
     model_2  = map(train, ~lm(bwt ~ gaweeks + blength, data = .x)),
-    model_3  = map(train, ~lm(bwt ~ bhead + blength + babysex, data = .x))) %>% 
+    model_3  = map(train, ~lm(bwt ~ bhead*blength + bhead*babysex + 
+                                babysex * blength  + babysex *  
+                                bhead*blength, data = .x))) %>% 
   mutate(
     rmse_1 = map2_dbl(model_1, test, ~rmse(model = .x, data = .y)),
     rmse_2 = map2_dbl(model_2, test, ~rmse(model = .x, data = .y)),
