@@ -74,7 +74,9 @@ baltimore_log =
   select(term, log_OR = estimate, OR, ci_lower, ci_upper, p.value)
 
 baltimore_log %>% 
-  knitr::kable(digits = 3)
+  knitr::kable(align = "lrr",
+               col.names = c("Term", "Estimate", "OR", "95% CI Lower", "95% CI Upper", "P-value"),
+               digits = 3)
 ```
 
 Based on the results above, keeping all other variables fixed, in Baltimore, MD, and we observed that homicides in which the victim is male are less likely to be resolved than those in which the victim is female.
@@ -108,7 +110,9 @@ all_log =
   filter(term == "victim_sexMale")
 
  all_log %>% 
-  knitr::kable(digits = 3)
+  knitr::kable(align = "lrr",
+               col.names = c("City, State", "Term", "Estimate", "OR", "95% CI Lower", "95% CI Upper", "P-value"),
+               digits = 3)
 ```
 
 Finally, we need to create a plot to show the estimated ORs and confidential intervals for each city. Organize it based on the estimated OR and comment the plot properly.
@@ -128,7 +132,7 @@ all_log %>%
 ```
 
 
-Clearly, assuming all other variables unchanged, homicides in which the victim is male are relatively less likely to be resolved than those in which the victim is female generally. Specifically, for most of cities, the OR is less than 1, representing a decreasing trend of odds of resolving a homicide when the victim is male compared with female. Some city like Albequerque, Stockton, and Fresno, on the other hands, shows a increased odds of resolving a homicide when the victim is male compared with female. 
+Clearly, assuming all other variables unchanged, homicides in which the victim is male are relatively less likely to be resolved than those in which the victim is female generally. Specifically, for most of cities, the OR and its CI is less than 1, representing a decreasing trend of odds of resolving a homicide when the victim is male compared with female. Some city like Albequerque, Stockton, and Fresno, on the other hands, shows a increased estimated odds of resolving a homicide when the victim is male compared with female. 
 
 ## Problem 3
 
